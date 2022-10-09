@@ -6,6 +6,7 @@ import (
 
 	"github.com/linrds/objectStorage/pkg/rabbitmq"
 )
+
 func StartHeartbeat() {
 	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBIT_SERVER"))
 	defer rb.Close()
