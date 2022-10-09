@@ -10,8 +10,11 @@ import (
 	"github.com/linrds/objectStorage/pkg/rabbitmq"
 )
 
-var dataServers = make(map[string]time.Time)
-var mu sync.Mutex
+var (
+	dataServers = make(map[string]time.Time)
+	mu sync.Mutex
+	rmu sync.RWMutex
+)
 
 func ListenHeartbeat() {
 	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBIT_SERVER"))
