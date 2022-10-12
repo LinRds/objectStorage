@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/linrds/objectStorage/pkg/dataServer/locate"
+	"github.com/linrds/objectStorage/pkg/utils"
 )
 
 func put(w http.ResponseWriter, r *http.Request) {
-	name := strings.Split(r.URL.EscapedPath(), "/")[2]
+	name := utils.GetNameFromUrl(r.URL)
 	infoPath := os.Getenv("STORAGE_ROOT") + "/temp/" + name
 	datPath := infoPath + ".dat"
 	tempInfo, err := readTempInfo(infoPath)
@@ -46,5 +46,6 @@ func validateFIleSize(path string, expected int64) error {
 
 func commitTempObject(datFile string, tempInfo *tempInfo) {
 	os.Rename(datFile, os.Getenv("STORAGE_ROOT")+"/objects/"+tempInfo.Hash)
-	locate.Add(tempInfo.Hash)
+	locate.Add(tempInfo.GetHash(), tempInfo.GetId())
+	
 }

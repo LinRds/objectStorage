@@ -2,15 +2,18 @@ package locate
 
 import (
 	"context"
+	"encoding/json"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/linrds/objectStorage/pkg/rabbitmq"
 	"github.com/linrds/objectStorage/pkg/utils"
+	"github.com/linrds/objectStorage/pkg/types"
 )
 
-func Locate(hash string) []string {
+
+
+func Locate(hash string) map[string]int {
 	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBIT_SERVER"))
 	rb.BroadCast("dataServer", hash)
 	ch := rb.Consume()
@@ -20,12 +23,15 @@ func Locate(hash string) []string {
 		for range ctx.Done() {}
 		rb.Close()
 	}()
-	var dataServers = make([]string, 0)
-	for msg := range ch {
-		ds, _ := strconv.Unquote(string(msg.Body))
-		if ds != "" {
-			dataServers = append(dataServers, ds)
+	var dataServers = make(map[string]int)
+	for i := 0; i < utils.ALL_SHARDS; i++ {
+		msg := <- ch
+		if len(msg.Body) == 0 {
+			return dataServers
 		}
+		var info types.LocateMessage
+		json.Unmarshal(msg.Body, &info)
+		dataServers[info.Addr] = info.Id
 	}
 	return dataServers
 }

@@ -36,7 +36,7 @@ func NewRabbitmq(rabbitServer string) *Rabbitmq {
 		panic(err)
 	}
 
-	return &Rabbitmq{
+	return &Rabbitmq {
 		ch: ch,
 		conn: conn,
 		Name: q.Name,
@@ -74,6 +74,7 @@ func (rb *Rabbitmq) SingleSend(queue string, body interface{}) {
 		panic(err)
 	}
 }
+
 // BroadCast向指定的exchange广播消息
 func (rb *Rabbitmq) BroadCast(exchange string, body interface{}) {
 	b, err := json.Marshal(body)

@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/linrds/objectStorage/pkg/utils"
 )
 
 func post(w http.ResponseWriter, r *http.Request) {
-	hash := strings.Split(r.URL.EscapedPath(), "/")[2]
+	hash := utils.GetNameFromUrl(r.URL)
 	size := utils.GetSizeFromHeader(r.Header)
 	if size < 0 {
 		w.WriteHeader(http.StatusInternalServerError)

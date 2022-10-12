@@ -1,18 +1,25 @@
 package heartbeat
 
-func ChooseRandomDataServers(n int, excluded []string) []string {
+import "math/rand"
+
+func ChooseRandomDataServers(n int, excluded map[string]int) []string {
 	var candidates []string
-	reverseExcluded := make(map[string]struct{})
-	for i := range excluded {
-		reverseExcluded[excluded[i]] = struct{}{}
-	}
 	alivable := getDataServers()
 	for i := range alivable {
-		if _, ok := reverseExcluded[alivable[i]]; !ok {
+		if _, ok := excluded[alivable[i]]; !ok {
 			candidates = append(candidates, alivable[i])
 		}
 	}
-	return candidates
+	length := len(candidates)
+	if length < n {
+		return candidates
+	}
+	p := rand.Perm(length)
+	var ds []string
+	for i := 0; i < n; i++ {
+		ds = append(ds, candidates[p[i]])
+	}
+	return ds
 }
 
 func getDataServers() []string {

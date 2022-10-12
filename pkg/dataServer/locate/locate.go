@@ -4,13 +4,15 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/linrds/objectStorage/pkg/rabbitmq"
+	"github.com/linrds/objectStorage/pkg/types"
 )
 
 var (
-	objects = make(map[string]struct{})
+	objects = make(map[string]int)
 	mu sync.Mutex
 	rmu sync.RWMutex
 )
@@ -27,27 +29,49 @@ func StartLocate() {
 		if err != nil {
 			panic(err)
 		}
-		if Exist(hash) {
-			rb.SingleSend(msg.ReplyTo, os.Getenv("LISTEN_ADDRESS"))
+		if id, ok := Exist(hash); ok {
+			if id > 0 {
+				rb.SingleSend(
+					msg.ReplyTo, 
+					types.LocateMessage{Id: id - 1, Addr: os.Getenv("LISTEN_ADDRESS")},
+				)
+			}
+			
 		}
 	}
 }
 
-func Exist(hash string) bool {
+func Exist(hash string) (id int, ok bool) {
 	rmu.RLock()
-	_, ok := objects[hash]
+	id, ok = objects[hash]
 	rmu.RUnlock()
-	return ok
+	return
 }
 
 func CollectObjects() {
 	files, _ := filepath.Glob(os.Getenv("STORAGE_ROOT") + "/objects/*")
 	for i := range files {
-		hash := filepath.Base(files[i])
-		objects[hash] = struct{}{}
+		file := strings.Split(filepath.Base(files[i]), ".")
+		if len(file) != 3 {
+			panic(files[i])
+		}
+		hash := file[0]
+		id, err := strconv.Atoi(file[1])
+		if err != nil {
+			panic(err)
+		}
+		objects[hash] = id
 	}
 }
 
-func Add(name string) {
-	
+func Add(hash string, id int) {
+	mu.Lock()
+	objects[hash] = id
+	mu.Unlock()
+}
+
+func Del(hash string) {
+	mu.Lock()
+	delete(objects, hash)
+	mu.Unlock()
 }

@@ -19,7 +19,7 @@ func NewEncoder() (*encoder, error){
 	if err != nil {
 		return nil, err
 	}
-	return &encoder{enc: enc, cache: make([]byte, 0, utils.BLOCK_SIZE)}, err
+	return &encoder{enc: enc}, err
 }
 
 //TODO: error 处理

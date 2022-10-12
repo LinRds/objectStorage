@@ -7,12 +7,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
+
+	"github.com/linrds/objectStorage/pkg/utils"
 )
 
 // TODO error作为日志输出
 func patch(w http.ResponseWriter, r *http.Request) {
-	uuid := strings.Split(r.URL.EscapedPath(), "/")[2] // uuid
+	uuid := utils.GetNameFromUrl(r.URL) // uuid
 	infoPath := os.Getenv("STORAGE_ROOT") + "/temp/" + uuid
 	datPath := infoPath + ".dat"
 	tempInfo, err := readTempInfo(infoPath)
