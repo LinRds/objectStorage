@@ -3,12 +3,14 @@ package rs
 import (
 	"io"
 	"log"
+	"sync"
 
 	"github.com/klauspost/reedsolomon"
 	"github.com/linrds/objectStorage/pkg/utils"
 )
 
 type encoder struct {
+	wg sync.WaitGroup
 	writers []io.Writer
 	enc reedsolomon.Encoder
 	cache []byte
@@ -57,9 +59,13 @@ func (e *encoder) Flush() {
 		return
 	}
 	for i := range e.writers {
-		e.writers[i].Write(shards[i])
+		e.wg.Add(1)
+		go func(i int) {
+			defer e.wg.Done()
+			e.writers[i].Write(shards[i])
+		}(i)
 	}
-
+	e.wg.Wait()
 	// remember to clear cache
 	e.cache = []byte{}
 }
