@@ -47,5 +47,4 @@ func validateFIleSize(path string, expected int64) error {
 func commitTempObject(datFile string, tempInfo *tempInfo) {
 	os.Rename(datFile, os.Getenv("STORAGE_ROOT")+"/objects/"+tempInfo.Hash)
 	locate.Add(tempInfo.GetHash(), tempInfo.GetId())
-	
 }

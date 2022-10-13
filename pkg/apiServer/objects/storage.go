@@ -24,6 +24,9 @@ func putStream(hash string, size int64) (*rs.RsPutStream, error) {
 
 func GetStream(hash string, size int64) (*rs.RsGetStream, error) {
 	dataServers := locate.Locate(hash)
+	if len(dataServers) < utils.DATA_SHARDS {
+		return nil, fmt.Errorf("object not found, not have enough shards to reconstruct object")
+	}
 	lack := utils.ALL_SHARDS - len(dataServers)
 	var comple []string
 	if lack > 0 {

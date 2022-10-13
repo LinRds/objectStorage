@@ -47,7 +47,6 @@ func (e *encoder) Flush() {
 	if len(e.cache) == 0 {
 		return
 	}
-	
 	shards, err := e.enc.Split(e.cache)
 	if err != nil {
 		log.Printf("Flush failed when Split shard: %v", err)

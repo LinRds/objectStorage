@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -44,4 +45,17 @@ func CalculateHash(r io.Reader) string {
 func GetNameFromUrl(url *url.URL) string {
 	name := strings.Split(url.EscapedPath(), "/")[2]
 	return name
+}
+
+func GetOffsetFromHeader(h http.Header) (int64, error){
+	s := h.Get("range")
+	if len(s) < 7 || s[:6] != "bytes=" {
+		return -1, fmt.Errorf("invalid offset format of %v", s)
+	}
+	numStr := strings.Split(s[6:], "-")[0]
+	offset, err := strconv.ParseInt(numStr, 0, 64)
+	if err != nil {
+		return -1, fmt.Errorf("parse offset failed, %v", err)
+	}
+	return offset, nil
 }

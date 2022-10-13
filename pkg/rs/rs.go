@@ -8,9 +8,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"errors"
 
 	"github.com/linrds/objectStorage/pkg/utils"
 )
+
+var ErrBuildWriteStream = errors.New("build write stream failed")
 
 type RsPutStream struct {
 	*encoder
@@ -19,8 +22,6 @@ type RsPutStream struct {
 type RsGetStream struct {
 	*decoder
 }
-
-
 
 type TempPutStream struct {
 	Server string
@@ -31,15 +32,15 @@ func NewTempPutStream(name, server string, size int64) (*TempPutStream, error) {
 	url := fmt.Sprintf("http://%s/temp/%s", server, url.PathEscape(name))
 	request, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, ErrBuildWriteStream
 	}
 	client := http.Client{}
 	request.Header.Set("size", fmt.Sprintf("%d", size))
 	resp, err := client.Do(request)
-	defer resp.Body.Close()
 	if err != nil {
-		return nil, err
+		return nil, ErrBuildWriteStream
 	}
+	defer resp.Body.Close()
 	uuid, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -51,10 +52,15 @@ func (t *TempPutStream) Write(b []byte) (n int, err error){
 	url := fmt.Sprintf("http://%s/temp/%s", t.Server, t.Uuid)
 	reader := bytes.NewReader(b)
 	request, err := http.NewRequest("PATCH", url, reader)
+	if err != nil {
+		return 0, err
+	}
 	client := http.Client{}
 	resp, err := client.Do(request)
+	if err != nil {
+		return 0, ErrBuildWriteStream
+	}
 	defer resp.Body.Close()
-	
 	size, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return 0, nil
@@ -103,9 +109,9 @@ func NewRsPutStream(name string, size int64, dataServers []string) (*RsPutStream
 	return &RsPutStream{encoder: encoder}, nil
 }
 
-func (rs *RsPutStream) Commit(success bool) error {
+func (rsp *RsPutStream) Commit(success bool) error {
 	var err error
-	for _, w := range rs.writers {
+	for _, w := range rsp.writers {
 		err = w.(*TempPutStream).Commit(success)
 	}
 	return err
@@ -114,29 +120,41 @@ func (rs *RsPutStream) Commit(success bool) error {
 func NewRsGetStream(hash string, size int64, dataServers map[string]int, comple []string) (*RsGetStream, error) {
 	servers := make([]string, utils.ALL_SHARDS)
 	for server, id := range dataServers {
-		servers[id] = server
+		servers[id - 1] = server // shard id starts from 1
 	}
 	readers := make([]io.Reader, utils.ALL_SHARDS)
 	writers := make([]io.Writer, utils.ALL_SHARDS)
+	perShard := (size + utils.DATA_SHARDS - 1) / utils.DATA_SHARDS
+	alivable := 0
 	for i := 0; i < utils.ALL_SHARDS; i++ {
-		hashId := hash + fmt.Sprintf(".%d", i)
-		if len(servers[i]) == 0 {
+		if servers[i] != "" {
+			hashId := hash + fmt.Sprintf(".%d", i + 1)
+			getStream, err := NewGetStream(servers[i], hashId)
+			if err == nil {
+				readers[i] = getStream
+				alivable += 1
+			}
+		} else {
+			servers[i] = comple[0]
+			comple = comple[1:]
+		}
+	}
+
+	if alivable < utils.DATA_SHARDS {
+		return nil, fmt.Errorf("not have enough shards for reconstruct data. have %d need %d", alivable, utils.DATA_SHARDS)
+	}
+
+	for i := range readers {
+		if readers[i] == nil {
+			hashId := hash + fmt.Sprintf(".%d", i + 1)
 			writer, err := NewTempPutStream(
 				hashId,
-				comple[0],
-				size,
+				servers[i],
+				perShard,
 			)
-			if err != nil {
-				return nil, err
+			if err == nil {
+				writers[i] = writer
 			}
-			writers[i] = writer
-			comple = comple[1:]
-		} else {
-			getStream, err := NewGetStream(servers[i], hashId)
-			if err != nil {
-				return nil, err
-			}
-			readers[i] = getStream
 		}
 	}
 	dec, err := NewDecoder(readers, writers, size)
@@ -144,4 +162,33 @@ func NewRsGetStream(hash string, size int64, dataServers map[string]int, comple 
 		return nil, err
 	}
 	return &RsGetStream{dec}, nil
+}
+
+func (rsg *RsGetStream) Seek(offset int64, whence int) (int64, error) {
+	if whence != io.SeekCurrent {
+		return -1, fmt.Errorf("invalid whence: %d, only support io.SeekCurrent", whence)
+	}
+	
+	if offset < 0 {
+		return -1, fmt.Errorf("only support forward seek")
+	}
+
+	for offset > 0 {
+		length := int64(utils.BLOCK_SIZE)
+		if length > offset {
+			length = offset
+		}
+		buf := make([]byte, length)
+		io.ReadFull(rsg, buf)
+		offset -= length
+	}
+	return offset, nil
+}
+
+func (rsg *RsGetStream) Close() {
+	for i := range rsg.writers {
+		if rsg.writers[i] != nil {
+			rsg.writers[i].(*TempPutStream).Commit(!rsg.notCommit[i])
+		}
+	}
 }
