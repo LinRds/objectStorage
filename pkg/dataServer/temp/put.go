@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/linrds/objectStorage/pkg/dataServer/locate"
 	"github.com/linrds/objectStorage/pkg/utils"
 )
 
@@ -42,9 +41,4 @@ func validateFIleSize(path string, expected int64) error {
 		return fmt.Errorf("actual size %d not equal to expected size %d", actual, expected)
 	}
 	return nil
-}
-
-func commitTempObject(datFile string, tempInfo *tempInfo) {
-	os.Rename(datFile, os.Getenv("STORAGE_ROOT")+"/objects/"+tempInfo.Hash)
-	locate.Add(tempInfo.GetHash(), tempInfo.GetId())
 }
