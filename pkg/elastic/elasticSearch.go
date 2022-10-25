@@ -1,7 +1,6 @@
 package elastic
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
