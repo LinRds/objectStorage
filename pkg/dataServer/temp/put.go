@@ -18,7 +18,7 @@ func put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	os.Remove(infoPath)
-	err = validateFIleSize(datPath, tempInfo.Size)
+	err = validateFileSize(datPath, tempInfo.Size)
 	if err != nil {
 		os.Remove(datPath)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -27,7 +27,7 @@ func put(w http.ResponseWriter, r *http.Request) {
 	commitTempObject(datPath, tempInfo)
 }
 
-func validateFIleSize(path string, expected int64) error {
+func validateFileSize(path string, expected int64) error {
 	datFile, err := os.Open(path)
 	if err != nil {
 		return err

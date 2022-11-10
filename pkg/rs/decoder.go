@@ -10,15 +10,15 @@ import (
 )
 
 type decoder struct {
-	wg sync.WaitGroup
-	writers []io.Writer
-	readers []io.Reader
+	wg        sync.WaitGroup
+	writers   []io.Writer
+	readers   []io.Reader
 	notCommit []bool
-	enc reedsolomon.Encoder
-	size int64 // size是文件实际大小，避免因为分片向上取整读出填充的内容
-	cache []byte
+	enc       reedsolomon.Encoder
+	size      int64 // size是文件实际大小，避免因为分片向上取整读出填充的内容
+	cache     []byte
 	cacheSize int
-	total int64
+	total     int64
 }
 
 func NewDecoder(readers []io.Reader, writers []io.Writer, size int64) (*decoder, error) {
@@ -27,10 +27,10 @@ func NewDecoder(readers []io.Reader, writers []io.Writer, size int64) (*decoder,
 		return nil, err
 	}
 	return &decoder{
-		readers: readers,
-		writers: writers,
-		enc: enc,
-		size: size,
+		readers:   readers,
+		writers:   writers,
+		enc:       enc,
+		size:      size,
 		notCommit: make([]bool, utils.ALL_SHARDS),
 	}, nil
 }
@@ -83,7 +83,7 @@ func (d *decoder) getData() (err error) {
 			d.wg.Add(1)
 			go func(i int) {
 				defer d.wg.Done()
-				_, err := d.writers[i].Write(shards[i]) 
+				_, err := d.writers[i].Write(shards[i])
 				if err != nil { // 允许写入被恢复的分片失败
 					d.notCommit[i] = true
 				}
@@ -94,7 +94,7 @@ func (d *decoder) getData() (err error) {
 
 	for i := 0; i < utils.DATA_SHARDS; i++ {
 		shardSize := int64(len(shards[i]))
-		if d.total + shardSize > d.size {
+		if d.total+shardSize > d.size {
 			shardSize = d.size - d.total
 		}
 		d.cache = append(d.cache, shards[i][:shardSize]...)
@@ -104,4 +104,3 @@ func (d *decoder) getData() (err error) {
 
 	return nil
 }
-
