@@ -17,10 +17,10 @@ var (
 )
 
 func ListenHeartbeat() {
-	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBIT_SERVER"))
+	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBITMQ_SERVER"))
 	defer rb.Close()
 	go removeExpiredDataServer()
-	rb.Bind("apiServer")
+	rb.Bind("apiServers")
 	ch := rb.Consume()
 	for msg := range ch {
 		dataServer, err := strconv.Unquote(string(msg.Body))

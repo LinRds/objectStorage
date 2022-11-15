@@ -14,8 +14,8 @@ import (
 
 
 func Locate(hash string) map[string]int {
-	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBIT_SERVER"))
-	rb.BroadCast("dataServer", hash)
+	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBITMQ_SERVER"))
+	rb.BroadCast("dataServers", hash)
 	ch := rb.Consume()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

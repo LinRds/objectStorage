@@ -27,9 +27,8 @@ type searchResult struct {
 		Hits  []hit
 	}
 }
-
 func getMetadata(name string, versionId int) (meta Metadata, e error) {
-	url := fmt.Sprintf("http://%s/metadata/objects/%s_%d/_source",
+	url := fmt.Sprintf("http://%s/metadata/objects/%s_%d/_source", 
 		os.Getenv("ES_SERVER"), name, versionId)
 	r, e := http.Get(url)
 	if e != nil {
@@ -45,7 +44,7 @@ func getMetadata(name string, versionId int) (meta Metadata, e error) {
 }
 
 func SearchLatestVersion(name string) (meta Metadata, e error) {
-	url := fmt.Sprintf("http://%s/metadata/_search?q=name:%s&size=1&sort=version:desc",
+	url := fmt.Sprintf("http://%s/metadata/_search?q=name:%s&size=1&sort=version:desc", // test success
 		os.Getenv("ES_SERVER"), url.PathEscape(name))
 	r, e := http.Get(url)
 	if e != nil {
@@ -75,7 +74,7 @@ func PutMetadata(name string, version int, size int64, hash string) error {
 	doc := fmt.Sprintf(`{"name":"%s","version":%d,"size":%d,"hash":"%s"}`,
 		name, version, size, hash)
 	client := http.Client{}
-	url := fmt.Sprintf("http://%s/metadata/objects/%s_%d?op_type=create",
+	url := fmt.Sprintf("http://%s/metadata/_create/%s_%d",
 		os.Getenv("ES_SERVER"), name, version)
 	request, _ := http.NewRequest("PUT", url, strings.NewReader(doc))
 	r, e := client.Do(request)

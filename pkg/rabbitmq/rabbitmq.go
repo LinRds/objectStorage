@@ -18,6 +18,7 @@ func NewRabbitmq(rabbitServer string) *Rabbitmq {
 	if err != nil {
 		panic(err)
 	}
+
 	ch, err := conn.Channel()
 	if err != nil {
 		panic(err)

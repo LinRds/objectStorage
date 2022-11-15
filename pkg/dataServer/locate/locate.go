@@ -18,10 +18,10 @@ var (
 )
 
 func StartLocate() {
-	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBIT_SERVER"))
+	rb := rabbitmq.NewRabbitmq(os.Getenv("RABBITMQ_SERVER"))
 	defer rb.Close()
 
-	rb.Bind("dataServer")
+	rb.Bind("dataServers")
 	ch := rb.Consume()
 
 	for msg := range ch {
