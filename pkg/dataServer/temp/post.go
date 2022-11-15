@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/linrds/objectStorage/pkg/utils"
 )
@@ -18,11 +19,12 @@ func post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cmd := exec.Command("uuidgen", "-t")
-	uuid, err := cmd.CombinedOutput()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	uuid := strings.TrimSuffix(string(output), "\n")
 	datPath := fmt.Sprintf("%s/temp/%s.dat", os.Getenv("STORAGE_ROOT"), uuid)
 	if f, err := os.Create(datPath); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -35,7 +37,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.Write(uuid)
+	w.Write([]byte(uuid))
 }
 
 func saveTempInfo(info *tempInfo) error {
