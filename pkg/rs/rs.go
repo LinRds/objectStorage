@@ -89,7 +89,7 @@ func (t *TempPutStream) Commit(success bool) error {
 
 func NewRsPutStream(name string, size int64, dataServers []string) (*RsPutStream, error) {
 	perShard := (size + utils.DATA_SHARDS - 1) / utils.DATA_SHARDS // 向上取整
-	var writers = make([]io.Writer, 0, len(dataServers))
+	var writers = make([]io.Writer, len(dataServers))
 	var err error
 	for i := range dataServers {
 		writers[i], err = NewTempPutStream(
