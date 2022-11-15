@@ -28,7 +28,7 @@ type searchResult struct {
 	}
 }
 func getMetadata(name string, versionId int) (meta Metadata, e error) {
-	url := fmt.Sprintf("http://%s/metadata/objects/%s_%d/_source", 
+	url := fmt.Sprintf("http://%s/metadata/_doc/%s_%d?filter_path=_source", 
 		os.Getenv("ES_SERVER"), name, versionId)
 	r, e := http.Get(url)
 	if e != nil {
@@ -39,7 +39,9 @@ func getMetadata(name string, versionId int) (meta Metadata, e error) {
 		return
 	}
 	result, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal(result, &meta)
+	var h hit
+	json.Unmarshal(result, &h)
+	meta = h.Source
 	return
 }
 
@@ -77,6 +79,7 @@ func PutMetadata(name string, version int, size int64, hash string) error {
 	url := fmt.Sprintf("http://%s/metadata/_create/%s_%d",
 		os.Getenv("ES_SERVER"), name, version)
 	request, _ := http.NewRequest("PUT", url, strings.NewReader(doc))
+	request.Header.Add("content-type", "application/json")
 	r, e := client.Do(request)
 	if e != nil {
 		return e
@@ -121,7 +124,7 @@ func SearchAllVersions(name string, from, size int) ([]Metadata, error) {
 
 func DelMetadata(name string, version int) {
 	client := http.Client{}
-	url := fmt.Sprintf("http://%s/metadata/objects/%s_%d",
+	url := fmt.Sprintf("http://%s/metadata/_doc/%s_%d",
 		os.Getenv("ES_SERVER"), name, version)
 	request, _ := http.NewRequest("DELETE", url, nil)
 	client.Do(request)
