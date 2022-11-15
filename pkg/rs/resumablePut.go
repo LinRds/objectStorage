@@ -45,8 +45,8 @@ func NewRsResumablePutStreamFromToken(token string) (*RsResumablePutStream, erro
 	if err != nil {
 		return nil, err
 	}
-	var streamToken *resumableToken
-	err = json.Unmarshal(b, streamToken)
+	var streamToken resumableToken
+	err = json.Unmarshal(b, &streamToken)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func NewRsResumablePutStreamFromToken(token string) (*RsResumablePutStream, erro
 	}
 	encoder.writers = writers
 	rsPutStream := &RsPutStream{encoder: encoder}
-	return &RsResumablePutStream{rsPutStream, streamToken}, nil
+	return &RsResumablePutStream{rsPutStream, &streamToken}, nil
 }
 
 func (r *RsResumablePutStream) ToToken() string{
