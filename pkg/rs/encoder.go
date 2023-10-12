@@ -16,12 +16,12 @@ type encoder struct {
 	cache []byte
 }
 
-func NewEncoder() (*encoder, error){
+func NewEncoder(writers []io.Writer) (*encoder, error){
 	enc, err := reedsolomon.New(utils.DATA_SHARDS, utils.PARITY_SHARDS)
 	if err != nil {
 		return nil, err
 	}
-	return &encoder{enc: enc}, err
+	return &encoder{enc: enc, writers: writers}, err
 }
 
 //TODO: error 处理

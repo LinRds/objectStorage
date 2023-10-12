@@ -101,11 +101,10 @@ func NewRsPutStream(name string, size int64, dataServers []string) (*RsPutStream
 			return nil, err
 		}
 	}
-	encoder, err := NewEncoder()
+	encoder, err := NewEncoder(writers)
 	if err != nil {
 		return nil, err
 	}
-	encoder.writers = writers
 	return &RsPutStream{encoder: encoder}, nil
 }
 

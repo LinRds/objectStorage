@@ -17,7 +17,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 	size := utils.GetSizeFromHeader(r.Header)
 	if size == -1 {
 		log.Println("invalid size of -1")
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	hash := utils.GetHashFromHeader(r.Header)

@@ -1,7 +1,6 @@
 package objects
 
 import (
-	"compress/gzip"
 	"crypto/sha256"
 	"encoding/base64"
 	"io"
@@ -16,20 +15,14 @@ import (
 	"github.com/linrds/objectStorage/pkg/dataServer/locate"
 )
 
-func writeCompactedFile(w io.Writer, file string) {
+func writeFile(w io.Writer, file string) {
 	f, err := os.Open(file)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	defer f.Close()
-	gr, err := gzip.NewReader(f)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer gr.Close()
-	io.Copy(w, gr)
+	io.Copy(w, f)
 }
 
 func getHashValidatedFile(name string) string {
@@ -39,7 +32,7 @@ func getHashValidatedFile(name string) string {
 	}
 	file := files[0]
 	h := sha256.New()
-	writeCompactedFile(h, file)
+	writeFile(h, file)
 	d := url.PathEscape(base64.StdEncoding.EncodeToString(h.Sum(nil)))
 	hash := strings.Split(name, ".")[2]
 	if d != hash {
@@ -59,5 +52,5 @@ func get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	writeCompactedFile(w, file)
+	writeFile(w, file)
 }

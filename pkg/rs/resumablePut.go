@@ -54,11 +54,10 @@ func NewRsResumablePutStreamFromToken(token string) (*RsResumablePutStream, erro
 	for i := 0; i < utils.ALL_SHARDS; i++ {
 		writers[i] = &TempPutStream{Uuid: streamToken.Uuids[i], Server: streamToken.Servers[i]}
 	}
-	encoder, err := NewEncoder()
+	encoder, err := NewEncoder(writers)
 	if err != nil {
 		return nil, err
 	}
-	encoder.writers = writers
 	rsPutStream := &RsPutStream{encoder: encoder}
 	return &RsResumablePutStream{rsPutStream, &streamToken}, nil
 }

@@ -22,7 +22,7 @@ type decoder struct {
 }
 
 func NewDecoder(readers []io.Reader, writers []io.Writer, size int64) (*decoder, error) {
-	enc, err := reedsolomon.New(utils.DATA_SHARDS, utils.PARITY_SHARDS, nil)
+	enc, err := reedsolomon.New(utils.DATA_SHARDS, utils.PARITY_SHARDS)
 	if err != nil {
 		return nil, err
 	}

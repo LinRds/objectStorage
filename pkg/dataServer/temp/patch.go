@@ -39,9 +39,9 @@ func readTempInfo(path string) (*tempInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	var info *tempInfo
-	json.Unmarshal(content, info)
-	return info, nil
+	var info tempInfo
+	json.Unmarshal(content, &info)
+	return &info, nil
 }
 
 func writeDatFile(path string, body io.ReadCloser, size int64) error {

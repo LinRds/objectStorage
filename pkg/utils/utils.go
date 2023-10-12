@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"log"
 )
 
 const (
@@ -29,8 +30,12 @@ func GetHashFromHeader(h http.Header) string {
 
 func GetSizeFromHeader(h http.Header) int64 {
 	s := h.Get("size")
+	if s == "" {
+		return 0
+	}
 	size, err := strconv.ParseInt(s, 0, 64)
 	if err != nil {
+		log.Println("parse size from string failed")
 		return -1
 	}
 	return size
@@ -46,7 +51,7 @@ func GetNameFromUrl(url *url.URL) string {
 	name := strings.Split(url.EscapedPath(), "/")[2]
 	return name
 }
-
+  
 func GetOffsetFromHeader(h http.Header) (int64, error){
 	s := h.Get("range")
 	if len(s) < 7 || s[:6] != "bytes=" {

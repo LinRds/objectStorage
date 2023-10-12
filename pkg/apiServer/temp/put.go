@@ -14,6 +14,7 @@ import (
 
 func put(w http.ResponseWriter, r *http.Request) {
 	token := utils.GetNameFromUrl(r.URL)
+	log.Println(token)
 	stream, err := rs.NewRsResumablePutStreamFromToken(token)
 	if err != nil {
 		log.Printf("retrive stream from token failed, %v", err)
@@ -63,11 +64,12 @@ func put(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			hash := utils.CalculateHash(getStream)
+			hash := url.PathEscape(utils.CalculateHash(getStream))
+			log.Println("hash: ", hash, "expected: ", stream.Hash)
 			if hash != stream.Hash {
 				stream.Commit(false)
 				log.Println("get file successful but hash mismatch")
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			if locate.Exist(url.PathEscape(hash)) {

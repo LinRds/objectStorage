@@ -2,7 +2,7 @@
 
 curl -I 10.29.2.1:12345/$1
 
-curl -v -XPUT --data-binary @/tmp/first 10.29.2.1:12345/$1
+curl -v -XPUT --data-binary @/tmp/first -H "range: bytes=0-" 10.29.2.1:12345/$1
 
 curl -I 10.29.2.1:12345/$1
 
